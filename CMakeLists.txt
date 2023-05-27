@@ -1,44 +1,52 @@
 cmake_minimum_required(VERSION 3.12)
-project(Tarefa1)
+project(TarefasCG)
+
+
+set(TAREFA_1 tarefa-1)
+set(TAREFA_2 tarefa-2)
+
+# get_filename_component(PARENT_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)
+set(LIBS "${CMAKE_SOURCE_DIR}/dependencies/libs")
+set(INCLUDE "${CMAKE_SOURCE_DIR}/dependencies/include")
 
 # Find OpenGL package
 find_package(OpenGL REQUIRED)
 
 # Set source files for your application
 set(SOURCES
-    src/main.cpp
+    ${TAREFA_1}/main.cpp
     glad.c
 )
 
 # Add executable target
-add_executable(Tarefa1 ${SOURCES})
+add_executable(TarefasCG ${SOURCES})
 
 # Link OpenGL libraries
-target_link_libraries(Tarefa1 PRIVATE OpenGL::GL)
+target_link_libraries(TarefasCG PRIVATE OpenGL::GL)
 
 # Platform-specific configurations
 if(WIN32)
     # Windows-specific configuration
     # You may need to adjust these paths to match your setup
-    target_link_libraries(Tarefa1 PRIVATE 
-        ${CMAKE_SOURCE_DIR}/dependecies/libs/win32/glew32.lib
-        ${CMAKE_SOURCE_DIR}/dependecies/libs/win32/glfw3.lib
+    target_link_libraries(TarefasCG PRIVATE 
+        ${LIBS}/win32/glew32.lib
+        ${LIBS}/win32/glfw3.lib
     )
-    target_include_directories(Tarefa1 PRIVATE ${CMAKE_SOURCE_DIR}/dependecies/include/win32)
+    target_include_directories(TarefasCG PRIVATE ${INCLUDE}/win32)
     
     # Copy DLL files
-    add_custom_command(TARGET Tarefa1 POST_BUILD
+    add_custom_command(TARGET TarefasCG POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${CMAKE_SOURCE_DIR}/dependecies/libs/win32/glew32.dll
-            $<TARGET_FILE_DIR:Tarefa1>
+            ${LIBS}/win32/glew32.dll
+            $<TARGET_FILE_DIR:TarefasCG>
     )
     
 elseif(UNIX AND NOT APPLE)
     # Linux-specific configuration
     # You may need to adjust these paths to match your setup
-    target_link_libraries(Tarefa1 PRIVATE
-        ${CMAKE_SOURCE_DIR}/dependecies/libs/linux/libGLEW.a
-        ${CMAKE_SOURCE_DIR}/dependecies/libs/linux/libglfw3.a
+    target_link_libraries(TarefasCG PRIVATE
+        ${LIBS}/linux/libGLEW.a
+        ${LIBS}/linux/libglfw3.a
         dl
         pthread
         X11
@@ -48,19 +56,19 @@ elseif(UNIX AND NOT APPLE)
         Xinerama
         Xcursor
     )
-    target_include_directories(Tarefa1 PRIVATE ${CMAKE_SOURCE_DIR}/dependecies/include/linux)
+    target_include_directories(TarefasCG PRIVATE ${INCLUDE}/linux)
     
 elseif(APPLE)
     # macOS-specific configuration
     # You may need to adjust these paths to match your setup
-    target_link_libraries(Tarefa1 PRIVATE
-        ${CMAKE_SOURCE_DIR}/dependencies/libs/macos/libbox2d.a
-        ${CMAKE_SOURCE_DIR}/dependencies/libs/macos/libglfw.3.3.dylib
+    target_link_libraries(TarefasCG PRIVATE
+        ${LIBS}/macos/libbox2d.a
+        ${LIBS}/macos/libglfw.3.3.dylib
         "-framework OpenGL"
         "-framework Cocoa"
         "-framework IOKit"
         "-framework CoreVideo"
         "-framework CoreFoundation"
     )
-    target_include_directories(Tarefa1 PRIVATE ${CMAKE_SOURCE_DIR}/dependencies/include/macos)
+    target_include_directories(TarefasCG PRIVATE ${INCLUDE}/macos)
 endif()
