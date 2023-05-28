@@ -4,17 +4,23 @@ project(TarefasCG)
 
 set(TAREFA_1 tarefa-1)
 set(TAREFA_2 tarefa-2)
+set(ATIVIDADE_VIVENCIAL_1 tarefa-atividade-vivencial-1)
+
 
 # get_filename_component(PARENT_DIR ${CMAKE_SOURCE_DIR} DIRECTORY)
 set(LIBS "${CMAKE_SOURCE_DIR}/dependencies/libs")
 set(INCLUDE "${CMAKE_SOURCE_DIR}/dependencies/include")
+
+# set(COMMON "${CMAKE_SOURCE_DIR}/common")
+
+# add_subdirectory(${COMMON})
 
 # Find OpenGL package
 find_package(OpenGL REQUIRED)
 
 # Set source files for your application
 set(SOURCES
-    ${TAREFA_1}/main.cpp
+    ${ATIVIDADE_VIVENCIAL_1}/main.cpp
     glad.c
 )
 
@@ -22,7 +28,7 @@ set(SOURCES
 add_executable(TarefasCG ${SOURCES})
 
 # Link OpenGL libraries
-target_link_libraries(TarefasCG PRIVATE OpenGL::GL)
+# target_link_libraries(TarefasCG PRIVATE OpenGL::GL ${COMMON})
 
 # Platform-specific configurations
 if(WIN32)

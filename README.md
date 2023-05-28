@@ -17,3 +17,8 @@ A translação é controlada pelas teclas: WASD (translação em X e Z) e IJ (tr
 O controle de escala é realizado pelas teclas E (aumentar) e Q (diminuir).
 
 ![](docs/tarefa-2.gif)
+
+## Atividade Vivencial 1
+**Objetivo**: Acrescentar ao visualizador um leitor de arquivos de malhas 3D (no momento, buscando somente a informação de geometria).
+
+![](docs/atividade-vivencial-1.gif)
