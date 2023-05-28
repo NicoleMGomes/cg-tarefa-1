@@ -13,10 +13,12 @@ using namespace std;
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#define OBJ_PATH "../models/Suzanne/suzanneTri.obj"
+
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 
 int setupShader();
-int setupGeometry();
+int setupGeometry(std::vector<GLfloat> &vertices);
 bool loadOBJ(
     const char *path,
     std::vector<glm::vec3> &out_vertices,
@@ -86,8 +88,10 @@ int main()
     // Compilando e buildando o programa de shader
     GLuint shaderID = setupShader();
 
+    std::vector<GLfloat> vertices;
+
     // Gerando um buffer simples
-    GLuint VAO = setupGeometry();
+    GLuint VAO = setupGeometry(vertices);
 
     glUseProgram(shaderID);
 
@@ -99,13 +103,15 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
+    int points = vertices.size() / 2;
+    int triangles = points / 3;
+
     // Loop da aplicacao - "game loop"
     while (!glfwWindowShouldClose(window))
     {
         // Checa se houveram eventos de input (key pressed, mouse moved etc.) e chama as funcoes de callback correspondentes
         glfwPollEvents();
 
-        // Limpa o buffer de cor
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // cor de fundo
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -135,16 +141,10 @@ int main()
         model = glm::scale(model, glm::vec3(scale, scale, scale));
 
         glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(model));
-        // Chamada de desenho - drawcall
-        // Poligono Preenchido - GL_TRIANGLES
 
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 360000);
-
-        // Chamada de desenho - drawcall
-        // CONTORNO - GL_LINE_LOOP
-
-        glDrawArrays(GL_POINTS, 0, 360000);
+        glDrawArrays(GL_TRIANGLES, 0, triangles);
+        glDrawArrays(GL_POINTS, 0, points);
         glBindVertexArray(0);
 
         // Troca os buffers da tela
@@ -351,27 +351,23 @@ bool loadOBJ(
     return true;
 }
 
-int setupGeometry()
+int setupGeometry(std::vector<GLfloat> &vertices)
 {
     std::vector<glm::vec3> vert;
     std::vector<glm::vec2> uvs;
     std::vector<glm::vec3> normals;
 
-    loadOBJ("/Users/i560750/Developer/Unisinos/CG/cg-tarefa-1/models/Suzanne/suzanneTri.obj", vert, uvs, normals);
-
-    GLfloat vertices[vert.size() * 6];
-    int size = 0;
+    loadOBJ(OBJ_PATH, vert, uvs, normals);
 
     for (int i = 0; i < vert.size(); i++)
     {
-        vertices[size] = vert[i].x;
-        vertices[size + 1] = vert[i].y;
-        vertices[size + 2] = vert[i].z;
-        //Define cor randomica
-        vertices[size + 3] = rand()%2;
-        vertices[size + 4] = rand()%2;
-        vertices[size + 5] = rand()%2;
-        size += 6;
+        vertices.push_back(vert[i].x);
+        vertices.push_back(vert[i].y);
+        vertices.push_back(vert[i].z);
+        // Define cor randomica
+        vertices.push_back(rand() % 2);
+        vertices.push_back(rand() % 2);
+        vertices.push_back(rand() % 2);
     }
 
     GLuint VBO, VAO;
@@ -383,7 +379,7 @@ int setupGeometry()
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     // Envia os dados do array de floats para o buffer da OpenGl
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
 
     // Geracao do identificador do VAO (Vertex Array Object)
     glGenVertexArrays(1, &VAO);
