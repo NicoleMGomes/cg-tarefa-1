@@ -22,3 +22,8 @@ O controle de escala é realizado pelas teclas E (aumentar) e Q (diminuir).
 **Objetivo**: Acrescentar ao visualizador um leitor de arquivos de malhas 3D (no momento, buscando somente a informação de geometria).
 
 ![](docs/atividade-vivencial-1.gif)
+
+## Tarefa 3
+**Objetivo**: Acrescentar texturas ao visualizador. 
+
+![](docs/tarefa-3.gif)

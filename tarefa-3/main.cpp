@@ -13,12 +13,16 @@ using namespace std;
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <stb_image/stb_image.h>
+
 #define OBJ_PATH "../models/Cube/CuboTextured.obj"
+#define TEXTURE_PATH "../textures/Cube.png"
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 
 int setupShader();
 int setupGeometry(std::vector<GLfloat> &vertices);
+int loadTexture(string path);
 bool loadOBJ(
     const char *path,
     std::vector<glm::vec3> &out_vertices,
@@ -100,6 +104,10 @@ int main()
 
     glUseProgram(shaderID);
 
+    // Associando com o shader o buffer de textura que conectaremos
+    // antes de desenhar com o bindTexture
+    glUniform1i(glGetUniformLocation(shaderID, "tex_buffer"), 0);
+
     glm::mat4 model = glm::mat4(1); // matriz identidade;
     GLint modelLoc = glGetUniformLocation(shaderID, "model");
 
@@ -147,18 +155,17 @@ int main()
 
         glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(model));
 
-        // Gera o identificador da textura na memória
-        // glGenTextures(1, &texID);
-        // glBindTexture(GL_TEXTURE_2D, texID);
-
-        GLuint textureID;
-        glGenTextures(1, &textureID);
-        glBindTexture(GL_TEXTURE_2D, textureID);
+        // Ativando o primeiro buffer de textura (0) e conectando ao identificador gerado
+        GLuint texID = loadTexture(TEXTURE_PATH);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texID);
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, triangles);
         glDrawArrays(GL_POINTS, 0, points);
         glBindVertexArray(0);
+
+        glBindTexture(GL_TEXTURE_2D, 0); // unbind da textura
 
         // Troca os buffers da tela
         glfwSwapBuffers(window);
@@ -364,6 +371,49 @@ bool loadOBJ(
     return true;
 }
 
+int loadTexture(string path)
+{
+    GLuint texID;
+
+    // Gera o identificador da textura na memória
+    glGenTextures(1, &texID);
+    glBindTexture(GL_TEXTURE_2D, texID);
+
+    // Ajusta os parâmetros de wrapping e filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Carregamento da imagem
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+
+    if (data)
+    {
+        if (nrChannels == 3) // jpg, bmp
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        }
+        else // png
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        }
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+
+    stbi_image_free(data);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return texID;
+}
+
 int setupGeometry(std::vector<GLfloat> &vertices)
 {
     std::vector<glm::vec3> vert;
@@ -374,7 +424,7 @@ int setupGeometry(std::vector<GLfloat> &vertices)
 
     for (int i = 0; i < vert.size(); i++)
     {
-        //Define posição: X Y Z
+        // Define posição: X Y Z
         vertices.push_back(vert[i].x);
         vertices.push_back(vert[i].y);
         vertices.push_back(vert[i].z);
@@ -382,7 +432,7 @@ int setupGeometry(std::vector<GLfloat> &vertices)
         vertices.push_back(normals[i].r);
         vertices.push_back(normals[i].g);
         vertices.push_back(normals[i].b);
-        //Define texture: S T
+        // Define texture: S T
         vertices.push_back(uvs[i].s);
         vertices.push_back(uvs[i].t);
     }
@@ -400,6 +450,9 @@ int setupGeometry(std::vector<GLfloat> &vertices)
 
     // Geracao do identificador do VAO (Vertex Array Object)
     glGenVertexArrays(1, &VAO);
+
+    // Ativa texture
+    glActiveTexture(GL_TEXTURE0);
 
     // Vincula (bind) o VAO primeiro, e em seguida  conecta e seta o(s) buffer(s) de vertices
     // e os ponteiros para os atributos

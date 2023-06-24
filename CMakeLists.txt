@@ -87,6 +87,7 @@ add_executable(AtividadeVivencial1
 add_executable(Tarefa3
     tarefa-3/main.cpp
     glad.c
+    stb_image.cpp
 )
 
 target_link_libraries(Tarefa3 CommonLib)
