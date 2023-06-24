@@ -15,13 +15,13 @@ using namespace std;
 #include <stb_image/stb_image.h>
 #include <shader/Shader.h>
 
-#define OBJ_PATH "../models/Suzanne/SuzanneTriTextured.obj"
-#define TEXTURE_PATH "../textures/Suzanne.png"
+#define MODEL "../models/Suzanne/SuzanneTriTextured"
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 int loadTexture(string path);
 int loadSimpleOBJ(string filepath, int &nVerts, glm::vec3 color);
 glm::mat4 getModel();
+std::string readMapKdFromMTL(string filePath);
 
 const GLuint WIDTH = 1000, HEIGHT = 1000;
 
@@ -59,12 +59,20 @@ int main()
     cout << "Renderer: " << renderer << endl;
     cout << "OpenGL version supported " << version << endl;
 
+    // Define arquivos OBJ e MTL
+    std::string objPath = MODEL;
+    objPath += ".obj";
+    std::string mtlPath = MODEL;
+    mtlPath += ".mtl";
+
     // Compilando e buildando o programa de shader
-    // Compilando e buildando o programa de shader
-	Shader shader("../shaders/sprite.vs", "../shaders/sprite.fs");
-    GLuint texID = loadTexture(TEXTURE_PATH);
+    Shader shader("../shaders/sprite.vs", "../shaders/sprite.fs");
+
+    std::string modelName = MODEL;
+    std::string textureName = readMapKdFromMTL(mtlPath);
+    GLuint texID = loadTexture(textureName);
     int nVerts;
-    GLuint VAO = loadSimpleOBJ(OBJ_PATH, nVerts, glm::vec3(0, 0, 0));
+    GLuint VAO = loadSimpleOBJ(objPath, nVerts, glm::vec3(0, 0, 0));
 
     glUseProgram(shader.ID);
     glUniform1i(glGetUniformLocation(shader.ID, "tex_buffer"), 0);
@@ -373,4 +381,34 @@ int loadTexture(string path)
     glBindTexture(GL_TEXTURE_2D, 0);
 
     return texID;
+}
+
+std::string readMapKdFromMTL(string filePath)
+{
+
+    std::ifstream file(filePath);
+    if (!file.is_open())
+    {
+        std::cout << "Failed to open MTL file: " << filePath << std::endl;
+        return "";
+    }
+
+    std::string mapKdTextureName = "";
+    std::string line;
+    while (std::getline(file, line))
+    {
+        if (line.empty())
+            continue;
+
+        if (line.substr(0, 6) == "map_Kd")
+        {
+            mapKdTextureName = line.substr(7);
+            break;
+        }
+    }
+
+    mapKdTextureName.erase(std::remove(mapKdTextureName.begin(), mapKdTextureName.end(), '\r'), mapKdTextureName.end());
+
+    file.close();
+    return mapKdTextureName;
 }
