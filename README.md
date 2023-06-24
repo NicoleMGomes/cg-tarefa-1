@@ -27,3 +27,5 @@ O controle de escala é realizado pelas teclas E (aumentar) e Q (diminuir).
 **Objetivo**: Acrescentar texturas ao visualizador. 
 
 ![](docs/tarefa-3.gif)
+
+![](docs/tarefa-3-suzanne.gif)

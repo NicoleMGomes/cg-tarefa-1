@@ -88,6 +88,7 @@ add_executable(Tarefa3
     tarefa-3/main.cpp
     glad.c
     stb_image.cpp
+    shader.cpp
 )
 
 target_link_libraries(Tarefa3 CommonLib)

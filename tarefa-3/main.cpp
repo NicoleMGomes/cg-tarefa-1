@@ -12,48 +12,18 @@ using namespace std;
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
 #include <stb_image/stb_image.h>
+#include <shader/Shader.h>
 
-#define OBJ_PATH "../models/Cube/CuboTextured.obj"
-#define TEXTURE_PATH "../textures/Cube.png"
+#define OBJ_PATH "../models/Suzanne/SuzanneTriTextured.obj"
+#define TEXTURE_PATH "../textures/Suzanne.png"
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
-
-int setupShader();
-int setupGeometry(std::vector<GLfloat> &vertices);
 int loadTexture(string path);
-bool loadOBJ(
-    const char *path,
-    std::vector<glm::vec3> &out_vertices,
-    std::vector<glm::vec2> &out_uvs,
-    std::vector<glm::vec3> &out_normals);
+int loadSimpleOBJ(string filepath, int &nVerts, glm::vec3 color);
+glm::mat4 getModel();
 
 const GLuint WIDTH = 1000, HEIGHT = 1000;
-
-const GLchar *vertexShaderSource = "#version 330\n"
-                                   "layout (location = 0) in vec3 position;\n"
-                                   "layout (location = 1) in vec3 color;\n"
-                                   "layout (location = 2) in vec2 tex_coord;\n"
-                                   "uniform mat4 model;\n"
-                                   "out vec4 finalColor;\n"
-                                   "out vec2 texCoord;\n"
-                                   "void main()\n"
-                                   "{\n"
-                                   "gl_Position = model * vec4(position, 1.0);\n"
-                                   "finalColor = vec4(color, 1.0);\n"
-                                   "texCoord = vec2(tex_coord.x, tex_coord.y);\n"
-                                   "}\0";
-
-const GLchar *fragmentShaderSource = "#version 330\n"
-                                     "in vec3 vertexColor;\n"
-                                     "in vec2 texCoord;\n"
-                                     "out vec4 color;\n"
-                                     "uniform sampler2D tex_buffer;\n"
-                                     "void main()\n"
-                                     "{\n"
-                                     "color = texture(tex_buffer, texCoord);"
-                                     "}\n\0";
 
 bool rotateX = false, rotateY = false, rotateZ = false;
 GLfloat translateX = 0.0f, translateY = 0.0f, translateZ = 0.0f;
@@ -89,82 +59,52 @@ int main()
     cout << "Renderer: " << renderer << endl;
     cout << "OpenGL version supported " << version << endl;
 
-    // Definindo as dimensoes da viewport com as mesmas dimensoes da janela da aplicacao
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    glViewport(0, 0, width, height);
-
     // Compilando e buildando o programa de shader
-    GLuint shaderID = setupShader();
+    // Compilando e buildando o programa de shader
+	Shader shader("../shaders/sprite.vs", "../shaders/sprite.fs");
+    GLuint texID = loadTexture(TEXTURE_PATH);
+    int nVerts;
+    GLuint VAO = loadSimpleOBJ(OBJ_PATH, nVerts, glm::vec3(0, 0, 0));
 
-    std::vector<GLfloat> vertices;
+    glUseProgram(shader.ID);
+    glUniform1i(glGetUniformLocation(shader.ID, "tex_buffer"), 0);
 
-    // Gerando um buffer simples
-    GLuint VAO = setupGeometry(vertices);
-
-    glUseProgram(shaderID);
-
-    // Associando com o shader o buffer de textura que conectaremos
-    // antes de desenhar com o bindTexture
-    glUniform1i(glGetUniformLocation(shaderID, "tex_buffer"), 0);
-
-    glm::mat4 model = glm::mat4(1); // matriz identidade;
-    GLint modelLoc = glGetUniformLocation(shaderID, "model");
-
-    model = glm::rotate(model, /*(GLfloat)glfwGetTime()*/ glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(model));
+    glm::mat4 projection = glm::mat4(1); // matriz identidade
+    projection = glm::ortho(-3.0, 3.0, -3.0, 3.0, -1.0, 1.0);
+    GLint projLoc = glGetUniformLocation(shader.ID, "projection");
+    glUniformMatrix4fv(projLoc, 1, false, glm::value_ptr(projection));
 
     glEnable(GL_DEPTH_TEST);
 
-    int points = vertices.size() / 2;
-    int triangles = points / 3;
-
-    // Loop da aplicacao - "game loop"
     while (!glfwWindowShouldClose(window))
     {
         // Checa se houveram eventos de input (key pressed, mouse moved etc.) e chama as funcoes de callback correspondentes
         glfwPollEvents();
 
+        // Definindo as dimensoes da viewport com as mesmas dimensoes da janela da aplicacao
+        int width, height;
+        glfwGetFramebufferSize(window, &width, &height);
+        glViewport(0, 0, width, height);
+
+        // Limpa o buffer de cor
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // cor de fundo
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glLineWidth(10);
         glPointSize(20);
 
-        float angle = (GLfloat)glfwGetTime();
-
-        model = glm::mat4(1);
-        if (rotateX)
-        {
-            model = glm::rotate(model, angle, glm::vec3(1.0f, 0.0f, 0.0f));
-        }
-        else if (rotateY)
-        {
-            model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
-        }
-        else if (rotateZ)
-        {
-            model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
-        }
-
-        // Translação
-        model = glm::translate(model, glm::vec3(translateX, translateY, translateZ));
-
-        // Escala
-        model = glm::scale(model, glm::vec3(scale, scale, scale));
-
+        glm::mat4 model = getModel();
+        GLint modelLoc = glGetUniformLocation(shader.ID, "model");
         glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(model));
 
         // Ativando o primeiro buffer de textura (0) e conectando ao identificador gerado
-        GLuint texID = loadTexture(TEXTURE_PATH);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texID);
 
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, triangles);
-        glDrawArrays(GL_POINTS, 0, points);
+        glDrawArrays(GL_TRIANGLES, 0, nVerts);
+        // glDrawArrays(GL_POINTS, 0, points);
         glBindVertexArray(0);
-
         glBindTexture(GL_TEXTURE_2D, 0); // unbind da textura
 
         // Troca os buffers da tela
@@ -243,143 +183,164 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     }
 }
 
-int setupShader()
+glm::mat4 getModel()
 {
-    // Vertex shader
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    // Checando erros de compilacao (exibicao via log no terminal)
-    GLint success;
-    GLchar infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
-                  << infoLog << std::endl;
-    }
-    // Fragment shader
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    // Checando erros de compilacao (exibicao via log no terminal)
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
-                  << infoLog << std::endl;
-    }
-    // Linkando os shaders e criando o identificador do programa de shader
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    // Checando por erros de linkagem
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
-                  << infoLog << std::endl;
-    }
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
 
-    return shaderProgram;
+    float angle = (GLfloat)glfwGetTime();
+
+    glm::mat4 model = glm::mat4(1);
+
+    if (rotateX)
+    {
+        model = glm::rotate(model, angle, glm::vec3(1.0f, 0.0f, 0.0f));
+    }
+    else if (rotateY)
+    {
+        model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+    }
+    else if (rotateZ)
+    {
+        model = glm::rotate(model, angle, glm::vec3(0.0f, 0.0f, 1.0f));
+    }
+
+    // Translação
+    model = glm::translate(model, glm::vec3(translateX, translateY, translateZ));
+
+    // Escala
+    model = glm::scale(model, glm::vec3(scale, scale, scale));
+
+    return model;
 }
 
-bool loadOBJ(
-    const char *path,
-    std::vector<glm::vec3> &out_vertices,
-    std::vector<glm::vec2> &out_uvs,
-    std::vector<glm::vec3> &out_normals)
+int loadSimpleOBJ(string filepath, int &nVerts, glm::vec3 color)
 {
-    std::ifstream file(path);
+    vector<glm::vec3> vertices;
+    vector<GLuint> indices;
+    vector<glm::vec2> texCoords;
+    vector<glm::vec3> normals;
+    vector<GLfloat> vbuffer;
 
-    if (!file)
+    ifstream inputFile;
+    inputFile.open(filepath.c_str());
+    if (inputFile.is_open())
     {
-        std::cerr << "Failed to open file: " << path << std::endl;
-        return false;
-    }
+        char line[100];
+        string sline;
 
-    std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
-    std::vector<glm::vec3> temp_vertices;
-    std::vector<glm::vec2> temp_uvs;
-    std::vector<glm::vec3> temp_normals;
-
-    std::string line;
-
-    while (std::getline(file, line))
-    {
-        std::istringstream iss(line);
-        std::string type;
-        iss >> type;
-
-        if (type == "v")
+        while (!inputFile.eof())
         {
-            glm::vec3 vertex;
-            iss >> vertex.x >> vertex.y >> vertex.z;
-            temp_vertices.push_back(vertex);
-        }
-        else if (type == "vt")
-        {
-            glm::vec2 uv;
-            iss >> uv.x >> uv.y;
-            temp_uvs.push_back(uv);
-        }
-        else if (type == "vn")
-        {
-            glm::vec3 normal;
-            iss >> normal.x >> normal.y >> normal.z;
-            temp_normals.push_back(normal);
-        }
-        else if (type == "f")
-        {
-            unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-            char slash;
+            inputFile.getline(line, 100);
+            sline = line;
 
-            for (int i = 0; i < 3; ++i)
+            string word;
+
+            istringstream ssline(line);
+            ssline >> word;
+
+            if (word == "v")
             {
-                iss >> vertexIndex[i] >> slash >> uvIndex[i] >> slash >> normalIndex[i];
-                vertexIndices.push_back(vertexIndex[i]);
-                uvIndices.push_back(uvIndex[i]);
-                normalIndices.push_back(normalIndex[i]);
+                glm::vec3 v;
+                ssline >> v.x >> v.y >> v.z;
+
+                vertices.push_back(v);
+            }
+            if (word == "vt")
+            {
+                glm::vec2 vt;
+                ssline >> vt.s >> vt.t;
+
+                texCoords.push_back(vt);
+            }
+            if (word == "vn")
+            {
+                glm::vec3 vn;
+                ssline >> vn.x >> vn.y >> vn.z;
+                normals.push_back(vn);
+            }
+            if (word == "f")
+            {
+                string tokens[3];
+
+                ssline >> tokens[0] >> tokens[1] >> tokens[2];
+
+                for (int i = 0; i < 3; i++)
+                {
+                    // Recuperando os indices de v
+                    int pos = tokens[i].find("/");
+                    string token = tokens[i].substr(0, pos);
+                    int index = atoi(token.c_str()) - 1;
+                    indices.push_back(index);
+
+                    vbuffer.push_back(vertices[index].x);
+                    vbuffer.push_back(vertices[index].y);
+                    vbuffer.push_back(vertices[index].z);
+                    vbuffer.push_back(color.r);
+                    vbuffer.push_back(color.g);
+                    vbuffer.push_back(color.b);
+
+                    // Recuperando os indices de vts
+                    tokens[i] = tokens[i].substr(pos + 1);
+                    pos = tokens[i].find("/");
+                    token = tokens[i].substr(0, pos);
+                    index = atoi(token.c_str()) - 1;
+                    vbuffer.push_back(texCoords[index].s);
+                    vbuffer.push_back(texCoords[index].t);
+
+                    // Recuperando os indices de vns
+                    tokens[i] = tokens[i].substr(pos + 1);
+                    index = atoi(tokens[i].c_str()) - 1;
+                    vbuffer.push_back(normals[index].x);
+                    vbuffer.push_back(normals[index].y);
+                    vbuffer.push_back(normals[index].z);
+                }
             }
         }
     }
-
-    // Populate the output vectors using the indices
-    for (unsigned int i = 0; i < vertexIndices.size(); ++i)
+    else
     {
-        unsigned int vertexIndex = vertexIndices[i];
-        unsigned int uvIndex = uvIndices[i];
-        unsigned int normalIndex = normalIndices[i];
-
-        glm::vec3 vertex = temp_vertices[vertexIndex - 1];
-        glm::vec2 uv = temp_uvs[uvIndex - 1];
-        glm::vec3 normal = temp_normals[normalIndex - 1];
-
-        out_vertices.push_back(vertex);
-        out_uvs.push_back(uv);
-        out_normals.push_back(normal);
+        cout << "Problema ao encontrar o arquivo " << filepath << endl;
     }
 
-    file.close();
+    inputFile.close();
+    GLuint VBO, VAO;
+    nVerts = vbuffer.size() / 11; // 3 pos + 3 cor + 3 normal + 2 texcoord
 
-    return true;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vbuffer.size() * sizeof(GLfloat), vbuffer.data(), GL_STATIC_DRAW);
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid *)0);
+    glEnableVertexAttribArray(0);
+
+    // Atributo cor (r, g, b)
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid *)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+
+    // Atributo coordenada de textura (s, t)
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid *)(6 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
+
+    // Atributo normal do vertice (x, y, z)
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (GLvoid *)(8 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(3);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    return VAO;
 }
 
 int loadTexture(string path)
 {
     GLuint texID;
 
-    // Gera o identificador da textura na memória
+    // Gera o identificador da textura na mem�ria
     glGenTextures(1, &texID);
     glBindTexture(GL_TEXTURE_2D, texID);
 
-    // Ajusta os parâmetros de wrapping e filtering
+    // Ajusta os par�metros de wrapping e filtering
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
@@ -412,70 +373,4 @@ int loadTexture(string path)
     glBindTexture(GL_TEXTURE_2D, 0);
 
     return texID;
-}
-
-int setupGeometry(std::vector<GLfloat> &vertices)
-{
-    std::vector<glm::vec3> vert;
-    std::vector<glm::vec2> uvs;
-    std::vector<glm::vec3> normals;
-
-    loadOBJ(OBJ_PATH, vert, uvs, normals);
-
-    for (int i = 0; i < vert.size(); i++)
-    {
-        // Define posição: X Y Z
-        vertices.push_back(vert[i].x);
-        vertices.push_back(vert[i].y);
-        vertices.push_back(vert[i].z);
-        // Define cor: R G B
-        vertices.push_back(normals[i].r);
-        vertices.push_back(normals[i].g);
-        vertices.push_back(normals[i].b);
-        // Define texture: S T
-        vertices.push_back(uvs[i].s);
-        vertices.push_back(uvs[i].t);
-    }
-
-    GLuint VBO, VAO;
-
-    // Geracao do identificador do VBO
-    glGenBuffers(1, &VBO);
-
-    // Faz a conexao (vincula) do buffer como um buffer de array
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    // Envia os dados do array de floats para o buffer da OpenGl
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
-
-    // Geracao do identificador do VAO (Vertex Array Object)
-    glGenVertexArrays(1, &VAO);
-
-    // Ativa texture
-    glActiveTexture(GL_TEXTURE0);
-
-    // Vincula (bind) o VAO primeiro, e em seguida  conecta e seta o(s) buffer(s) de vertices
-    // e os ponteiros para os atributos
-    glBindVertexArray(VAO);
-
-    // Atributo posicao (x, y, z)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *)0);
-    glEnableVertexAttribArray(0);
-
-    // Atributo cor (r, g, b)
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *)(3 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-
-    // Atributo texture (s, t)
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid *)(6 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(2);
-
-    // Observe que isso e permitido, a chamada para glVertexAttribPointer registrou o VBO como o objeto de buffer de vertice
-    // atualmente vinculado - para que depois possamos desvincular com seguranca
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // Desvincula o VAO (e uma boa pratica desvincular qualquer buffer ou array para evitar bugs medonhos)
-    glBindVertexArray(0);
-
-    return VAO;
 }
