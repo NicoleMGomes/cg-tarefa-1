@@ -91,4 +91,11 @@ add_executable(Tarefa3
     shader.cpp
 )
 
+add_executable(Tarefa4
+    tarefa-4/main.cpp
+    glad.c
+    stb_image.cpp
+    shader.cpp
+)
+
 target_link_libraries(Tarefa3 CommonLib)

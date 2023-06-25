@@ -29,3 +29,8 @@ O controle de escala é realizado pelas teclas E (aumentar) e Q (diminuir).
 ![](docs/tarefa-3.gif)
 
 ![](docs/tarefa-3-suzanne.gif)
+
+## Tarefa 4
+**Objetivo**: Acrescentar material e iluminação ao visualizador. 
+
+![](docs/tarefa-4.gif)
