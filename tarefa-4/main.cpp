@@ -339,7 +339,6 @@ vector<GLfloat> loadOBJ(string filepath, int &nVerts)
     }
 
     inputFile.close();
-    GLuint VBO, VAO;
     nVerts = vbuffer.size() / 8;
 
     return vbuffer;
