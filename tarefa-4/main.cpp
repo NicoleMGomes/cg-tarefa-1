@@ -55,7 +55,7 @@ int main()
 #endif
 
     // Criacao da janela GLFW
-    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "CG Tarefa 3 - Nicole", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "CG Tarefa 4 - Nicole", nullptr, nullptr);
     glfwMakeContextCurrent(window);
 
     // Fazendo o registro da funcao de callback para a janela GLFW
