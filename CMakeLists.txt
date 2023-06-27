@@ -98,4 +98,12 @@ add_executable(Tarefa4
     shader.cpp
 )
 
-target_link_libraries(Tarefa3 CommonLib)
+add_executable(Tarefa5
+    tarefa-5/main.cpp
+    glad.c
+    stb_image.cpp
+    shader.cpp
+    camera.cpp
+)
+
+target_link_libraries(Tarefa5 CommonLib)

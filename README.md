@@ -34,3 +34,8 @@ O controle de escala é realizado pelas teclas E (aumentar) e Q (diminuir).
 **Objetivo**: Acrescentar material e iluminação ao visualizador. 
 
 ![](docs/tarefa-4.gif)
+
+## Tarefa 5
+**Objetivo**: Acrescentar câmera em primeira pessoa. 
+
+![](docs/tarefa-5.gif)
