@@ -18,6 +18,7 @@ using namespace std;
 
 // Assinatura de funções
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 int loadTexture(string path);
 vector<GLfloat> loadOBJ(string filepath, int &nVerts);
 std::string loadMTL(string filePath);
@@ -62,6 +63,10 @@ int main()
 
     // Fazendo o registro da funcao de callback para a janela GLFW
     glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+
+    glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // GLAD: carrega todos os ponteiros d funcoes da OpenGL
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -80,8 +85,6 @@ int main()
 
     // Iniciando câmera
     camera.init(WIDTH, HEIGHT, &shader);
-
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Define arquivos OBJ e MTL
     std::string objPath = MODEL_PATH;
@@ -201,7 +204,12 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
         translateZ -= 0.5f;
     }
 
-    camera.updateCameraPos(window);
+    camera.key_callback(window);
+}
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos)
+{
+    camera.mouse_callback(window, xpos, ypos);
 }
 
 glm::mat4 getModel()

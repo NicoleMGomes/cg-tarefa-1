@@ -19,23 +19,23 @@ public:
 	glm::vec3 cameraUp;
 	float cameraSpeed;
 	bool firstMouse;
-	bool rotateX;
-	bool rotateY;
-	bool rotateZ;
+	float lastX;
+	float lastY;
 	float yaw;
 	float pitch;
+	float sensitivity;
 
 	void init(GLuint width, GLuint height, Shader *shader)
 	{
 		// Inicializa propriedades da câmera
 		firstMouse = true;
-		rotateX = false;
-		rotateY = false;
-		rotateZ = false;
-		cameraSpeed = 0.05f;
 		cameraPos = glm::vec3(0.0, 0.0, 3.0);
 		cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 		cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+		cameraSpeed = 0.05f;
+		sensitivity = 0.05f;
+		pitch = 0.0;
+		yaw = -90.0;
 
 		// Atualiza propriedades do shader
 		glm::mat4 view = glm::lookAt(glm::vec3(0.0, 0.0, 3.0), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
@@ -55,7 +55,7 @@ public:
 		shader->setMat4("view", glm::value_ptr(view));
 	}
 
-	void updateCameraPos(GLFWwindow *window)
+	void key_callback(GLFWwindow *window)
 	{
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		{
@@ -76,5 +76,33 @@ public:
 		{
 			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
 		}
+	}
+
+	void mouse_callback(GLFWwindow *window, double xpos, double ypos)
+	{
+		if (firstMouse)
+		{
+			lastX = xpos;
+			lastY = ypos;
+			firstMouse = false;
+		}
+
+		float offsetX = xpos - lastX;
+		float offsetY = lastY - ypos;
+
+		lastX = xpos;
+		lastY = ypos;
+
+		offsetX *= sensitivity;
+		offsetY *= sensitivity;
+
+		pitch += offsetY;
+		yaw += offsetX;
+
+		glm::vec3 front;
+		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		front.y = sin(glm::radians(pitch));
+		front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		cameraFront = glm::normalize(front);
 	}
 };
