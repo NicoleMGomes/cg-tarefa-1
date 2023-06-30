@@ -39,3 +39,8 @@ O controle de escala é realizado pelas teclas E (aumentar) e Q (diminuir).
 **Objetivo**: Acrescentar câmera em primeira pessoa. 
 
 ![](docs/tarefa-5.gif)
+
+## Tarefa 6
+**Objetivo**: Acrescentar trajetórias para os objetos lidos em sua cena.
+
+![](docs/tarefa-6.gif)

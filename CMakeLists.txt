@@ -106,4 +106,14 @@ add_executable(Tarefa5
     camera.cpp
 )
 
+add_executable(Tarefa6
+    tarefa-6/main.cpp
+    glad.c
+    stb_image.cpp
+    shader.cpp
+    camera.cpp
+    curve.cpp
+    bezier.cpp
+)
+
 target_link_libraries(Tarefa5 CommonLib)
