@@ -64,10 +64,6 @@ elseif(APPLE)
     include_directories(${INCLUDE}/macos)
 endif()
 
-add_library(CommonLib STATIC 
-    common/mesh.cpp
-)
-
 # Add executable target
 add_executable(Tarefa1 
     tarefa-1/main.cpp
@@ -108,6 +104,16 @@ add_executable(Tarefa5
 
 add_executable(Tarefa6
     tarefa-6/main.cpp
+    glad.c
+    stb_image.cpp
+    shader.cpp
+    camera.cpp
+    curve.cpp
+    bezier.cpp
+)
+
+add_executable(IntegralizacaoGB
+    tarefa-integralizacao-gb/main.cpp
     glad.c
     stb_image.cpp
     shader.cpp
