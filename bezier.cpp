@@ -62,7 +62,7 @@ void Bezier::generateCurve(int pointsPerSegment)
 	glEnableVertexAttribArray(0);
 
 	// Observe que isso e permitido, a chamada para glVertexAttribPointer registrou o VBO como o objeto de buffer de vertice
-	// atualmente vinculado - para que depois possamos desvincular com seguran�a
+	// atualmente vinculado - para que depois possamos desvincular com segurança
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// Desvincula o VAO
