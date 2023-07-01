@@ -120,6 +120,7 @@ add_executable(IntegralizacaoGB
     camera.cpp
     curve.cpp
     bezier.cpp
+    object.cpp
 )
 
 target_link_libraries(Tarefa5 CommonLib)

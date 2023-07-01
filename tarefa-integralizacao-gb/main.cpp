@@ -16,6 +16,7 @@ using namespace std;
 #include <shader/Shader.h>
 #include <camera/Camera.h>
 #include <bezier/Bezier.h>
+#include <object/Object.h>
 
 // Assinatura de funções
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
@@ -31,8 +32,8 @@ vector<glm::vec3> generateControlPointsSet(string filepath);
 const int POINTS_PER_SEGMENT = 200;
 const float UPDATE_INTERVAL = 0.001;
 const std::string CONTROL_POINTS_PATH = "../files/ControlPoints.txt";
-const std::string MODEL_PATH_1 = "../models/Suzanne/SuzanneTriTextured";
-const std::string MODEL_PATH_2 = "../models/Suzanne/SuzanneTriTextured";
+const std::string SUZANNE_PATH = "../models/Suzanne/SuzanneTriTextured";
+const std::string CUBE_PATH = "../models/Cube/CuboTextured";
 const GLuint WIDTH = 800;
 const GLuint HEIGHT = 800;
 
@@ -50,6 +51,7 @@ vector<GLfloat> ka;
 vector<GLfloat> ks;
 float ns;
 
+vector<Object> objects;
 Camera camera;
 
 int main()
@@ -92,18 +94,20 @@ int main()
     // Iniciando câmera
     camera.init(WIDTH, HEIGHT, &shader);
 
-    // Define arquivos OBJ e MTL
-    std::string objPath = MODEL_PATH_1;
-    objPath += ".obj";
-    std::string mtlPath = MODEL_PATH_1;
-    mtlPath += ".mtl";
+    objects.push_back(Object(SUZANNE_PATH));
+    objects.push_back(Object(CUBE_PATH));
 
-    // Setando VAO e VBO com textura
-    int nVerts;
-    std::string textureName = loadMTL(mtlPath);
-    GLuint texID = loadTexture(textureName);
-    vector<GLfloat> vertices = loadOBJ(objPath, nVerts);
-    GLuint VAO = setupSprite(vertices);
+    for (Object &object : objects)
+    {
+        int nVerts;
+        std::string textureName = loadMTL(object.getMtlPath());
+        GLuint texID = loadTexture(textureName);
+        vector<GLfloat> vertices = loadOBJ(object.getObjPath(), nVerts);
+        GLuint VAO = setupSprite(vertices);
+        object.texID = texID;
+        object.vao = VAO;
+        object.nVerts = nVerts;
+    }
 
     glUseProgram(shader.ID);
     glUniform1i(glGetUniformLocation(shader.ID, "tex_buffer"), 0);
@@ -165,20 +169,29 @@ int main()
         GLint modelLoc = glGetUniformLocation(shader.ID, "model");
         glUniformMatrix4fv(modelLoc, 1, 0, glm::value_ptr(model));
 
-        // Ativando o primeiro buffer de textura (0) e conectando ao identificador gerado
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texID);
 
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, nVerts);
-        glBindVertexArray(0);
+        for (const Object &object : objects)
+        {
+            // Ativando o primeiro buffer de textura (0) e conectando ao identificador gerado
+            glBindTexture(GL_TEXTURE_2D, object.texID);
+            glBindVertexArray(object.vao);
+            glDrawArrays(GL_TRIANGLES, 0, object.nVerts);
+            glBindVertexArray(0);
+        }
+
         glBindTexture(GL_TEXTURE_2D, 0); // unbind da textura
 
         // Troca os buffers da tela
         glfwSwapBuffers(window);
     }
     // Pede pra OpenGL desalocar os buffers
-    glDeleteVertexArrays(1, &VAO);
+
+    for (const Object &object : objects)
+    {
+        glDeleteVertexArrays(1, &(object.vao));
+    }
+
     // Finaliza a execucao da GLFW, limpando os recursos alocados por ela
     glfwTerminate();
     return 0;
