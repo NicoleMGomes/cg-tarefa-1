@@ -29,7 +29,7 @@ public:
 	{
 		// Inicializa propriedades da câmera
 		firstMouse = true;
-		cameraPos = glm::vec3(0.0, 0.0, 3.0);
+		cameraPos = glm::vec3(2.0, 0.0, 10.0);
 		cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 		cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 		cameraSpeed = 0.05f;

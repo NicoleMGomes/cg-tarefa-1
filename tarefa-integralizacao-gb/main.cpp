@@ -22,7 +22,7 @@ using namespace std;
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mode);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 int loadTexture(string filepath);
-vector<GLfloat> loadOBJ(string filepath, int &nVerts);
+vector<GLfloat> loadOBJ(string filepath, int &nVerts, int offset);
 std::string loadMTL(string filePath);
 int setupSprite(vector<GLfloat> vbuffer);
 glm::mat4 getModel();
@@ -94,19 +94,22 @@ int main()
     // Iniciando câmera
     camera.init(WIDTH, HEIGHT, &shader);
 
+    objects.push_back(Object(CUBE_PATH));
     objects.push_back(Object(SUZANNE_PATH));
     objects.push_back(Object(CUBE_PATH));
+    int offset = 0;
 
     for (Object &object : objects)
     {
         int nVerts;
         std::string textureName = loadMTL(object.getMtlPath());
         GLuint texID = loadTexture(textureName);
-        vector<GLfloat> vertices = loadOBJ(object.getObjPath(), nVerts);
+        vector<GLfloat> vertices = loadOBJ(object.getObjPath(), nVerts, offset);
         GLuint VAO = setupSprite(vertices);
         object.texID = texID;
         object.vao = VAO;
         object.nVerts = nVerts;
+        offset += 1;
     }
 
     glUseProgram(shader.ID);
@@ -280,7 +283,7 @@ glm::mat4 getModel()
     return model;
 }
 
-vector<GLfloat> loadOBJ(string filepath, int &nVerts)
+vector<GLfloat> loadOBJ(string filepath, int &nVerts, int offset)
 {
     vector<glm::vec3> vertices;
     vector<GLuint> indices;
@@ -310,7 +313,7 @@ vector<GLfloat> loadOBJ(string filepath, int &nVerts)
             {
                 glm::vec3 v;
                 ssline >> v.x >> v.y >> v.z;
-
+                v.x += offset * 2.5;
                 vertices.push_back(v);
             }
             if (word == "vt")

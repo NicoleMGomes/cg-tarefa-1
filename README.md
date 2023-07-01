@@ -79,3 +79,8 @@ O controle de escala é realizado pelas teclas E (aumentar) e Q (diminuir).
 **Objetivo**: Acrescentar trajetórias para os objetos lidos em sua cena.
 
 ![](docs/tarefa-6.gif)
+
+## Integralização GB
+**Objetivo**: Criar cena para integralização GB com mais de um objeto
+
+![](docs/integralizacao-gb.gif)
